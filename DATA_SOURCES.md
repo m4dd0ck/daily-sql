@@ -12,10 +12,18 @@ committed files byte for byte; the committed Parquet is what the puzzles are gra
 
 - **Source**: DOHMH New York City Restaurant Inspection Results, NYC Open Data,
   https://data.cityofnewyork.us/d/43nn-pn8j (Socrata API `resource/43nn-pn8j.csv`).
-- **Terms**: published under the NYC Open Data Law (NYC Administrative Code Title 23,
-  Chapter 5, https://codelibrary.amlegal.com/codes/newyorkcity/latest/NYCadmin/0-0-0-216807),
-  which makes public data sets available without registration, license or restrictions on
-  use. Attribution: NYC Department of Health and Mental Hygiene, via NYC Open Data.
+- **Terms**: published under the NYC Open Data Law, NYC Administrative Code §23-502(d)
+  (https://codelibrary.amlegal.com/codes/newyorkcity/latest/NYCadmin/0-0-0-216807; readable
+  copy at https://nycadmincode.readthedocs.io/t23/c05/): public data sets "shall be made
+  available without any registration requirement, license requirement or restrictions on
+  their use provided that the department may require a third party providing to the public
+  any public data set, or application utilizing such data set, to explicitly identify the
+  source and version of the public data set, and a description of any modifications made to
+  such public data set." This file is that identification: the source above, the version in
+  `public/data/sources.json` (retrieval date), the modifications under Subset, Kept and
+  Dropped. Neither dataset's portal metadata sets a separate license (checked 2026-11-01 via
+  `api/views/<id>.json`). Attribution: NYC Department of Health and Mental Hygiene, via NYC
+  Open Data.
 - **Subset**: restaurants whose `camis` ends in 7 (about 10% of restaurants), with every row
   each of them has. The source keeps a rolling window of recent inspections.
 - **Kept**: `camis, dba, boro, zipcode, cuisine_description, inspection_date, action,
