@@ -1,0 +1,25 @@
+{
+  "retrieved_at": "2026-11-01",
+  "tables": {
+    "inspections": {
+      "rows": 29478,
+      "bytes": 239245
+    },
+    "service_requests": {
+      "rows": 34559,
+      "bytes": 817409
+    },
+    "complaints": {
+      "rows": 25290,
+      "bytes": 358713
+    },
+    "emissions": {
+      "rows": 18984,
+      "bytes": 401636
+    },
+    "synthetic_grade_feed": {
+      "rows": 4712,
+      "bytes": 69459
+    }
+  }
+}
