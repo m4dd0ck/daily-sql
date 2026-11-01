@@ -7,3 +7,4 @@ playwright-report/
 .DS_Store
 /*.parquet
 tmp_*.parquet
+public/extensions/
