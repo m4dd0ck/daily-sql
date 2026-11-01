@@ -17,6 +17,12 @@ async function waitUntilReady(page: Page): Promise<void> {
   await expect(page.locator('#engine-status')).toHaveText('Ready.');
 }
 
+// Reason: toHaveText also matches a hidden element, and the previous puzzle's feedback stays in
+// the DOM (hidden) after navigating; only a visible message is this submit's.
+function feedbackShown(page: Page) {
+  return page.locator('#feedback:visible');
+}
+
 test('solves today’s puzzle with its reference SQL', async ({ page }) => {
   const today = puzzleForNumber(todaysPuzzleNumber(), bank);
   await page.goto('./');
@@ -24,7 +30,7 @@ test('solves today’s puzzle with its reference SQL', async ({ page }) => {
   await waitUntilReady(page);
   await typeQuery(page, today.referenceSql);
   await page.getByRole('button', { name: 'Submit' }).click();
-  await expect(page.locator('#feedback')).toHaveText(/^Solved in 1 attempt\./);
+  await expect(feedbackShown(page)).toHaveText(/^Solved in 1 attempt\./);
   await expect(page.locator('#share-preview')).toContainText(`Daily SQL #${todaysPuzzleNumber()}`);
   await expect(page.locator('#share-preview')).toContainText('🟩');
 });
@@ -44,10 +50,10 @@ test('a wrong answer gets feedback and a square, then the right one solves it', 
     "SELECT boro, round(avg(score), 2) FROM inspections WHERE boro <> '0' GROUP BY boro",
   );
   await page.getByRole('button', { name: 'Submit' }).click();
-  await expect(page.locator('#feedback')).toContainText('Right shape, wrong values');
+  await expect(feedbackShown(page)).toContainText('Right shape, wrong values');
   await typeQuery(page, fanOut.referenceSql);
   await page.getByRole('button', { name: 'Submit' }).click();
-  await expect(page.locator('#feedback')).toHaveText(/^Solved in 2 attempts\./);
+  await expect(feedbackShown(page)).toHaveText(/^Solved in 2 attempts\./);
   await expect(page.locator('#share-preview')).toContainText('🟨🟩');
 });
 
@@ -66,7 +72,7 @@ test('reports SQL errors', async ({ page }) => {
   await waitUntilReady(page);
   await typeQuery(page, 'SELECT nope FROM inspections');
   await page.getByRole('button', { name: 'Run' }).click();
-  await expect(page.locator('#feedback')).toContainText('nope');
+  await expect(feedbackShown(page)).toContainText('nope');
 });
 
 test('works when localStorage throws', async ({ page }) => {
@@ -95,6 +101,31 @@ test('sends a link to a future puzzle to today’s', async ({ page }) => {
   );
 });
 
+test('a grade still running when the visitor moves on counts only on its own puzzle', async ({
+  page,
+}) => {
+  const [first, second] = bank;
+  if (!first || !second) throw new Error('bank too small');
+  await page.clock.setFixedTime(new Date(`${dateOfPuzzle(3)}T12:00:00-05:00`));
+  await page.goto(`./#/${first.id}`);
+  await waitUntilReady(page);
+  // A valid, wrong, deliberately slow query, so the move happens while it is being graded.
+  await typeQuery(
+    page,
+    'SELECT count(*) AS n FROM range(20000) a(x), range(20000) b(y) WHERE (x + y) % 7 = 0',
+  );
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect(page.locator('#engine-status')).toHaveText('Grading…');
+  await page.goto(`./#/${second.id}`);
+  await expect(page.locator('#puzzle-title')).toHaveText(second.title);
+  await waitUntilReady(page);
+  await expect(page.locator('#feedback')).toBeHidden();
+  const history = await page.evaluate(() => localStorage.getItem('daily-sql:history:v1'));
+  const days = JSON.parse(history ?? '{}') as Record<string, { attempts: unknown[] }>;
+  expect(days[String(first.id)]?.attempts).toHaveLength(1);
+  expect(days[String(second.id)]?.attempts ?? []).toHaveLength(0);
+});
+
 test('solves every puzzle in the bank with its reference SQL in the browser engine', async ({
   page,
 }, testInfo) => {
@@ -106,7 +137,7 @@ test('solves every puzzle in the bank with its reference SQL in the browser engi
     await waitUntilReady(page);
     await typeQuery(page, puzzle.referenceSql);
     await page.getByRole('button', { name: 'Submit' }).click();
-    await expect(page.locator('#feedback'), puzzle.slug).toHaveText(/^Solved in 1 attempt\./);
+    await expect(feedbackShown(page), puzzle.slug).toHaveText(/^Solved in 1 attempt\./);
   }
 });
 
@@ -116,7 +147,7 @@ test('stops a runaway query and keeps working afterwards', async ({ page }, test
   await waitUntilReady(page);
   await typeQuery(page, 'SELECT sum(a.i * b.i) FROM range(1000000) a(i), range(1000000) b(i)');
   await page.getByRole('button', { name: 'Run' }).click();
-  await expect(page.locator('#feedback')).toContainText('Query stopped after 15 s', {
+  await expect(feedbackShown(page)).toContainText('Query stopped after 15 s', {
     timeout: 40_000,
   });
   await typeQuery(page, 'SELECT count(*) AS n FROM service_requests');
