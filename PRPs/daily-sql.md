@@ -34,38 +34,38 @@ practice sites skip.
 
 ## What
 
-- [ ] `scripts/fetch-data.ts`: downloads the subsets, writes `public/data/*.parquet`, records retrieval date
-- [ ] `DATA_SOURCES.md`: source URL, license, retrieval date, subsetting rule and dropped columns per table
-- [ ] `puzzles/*.yaml`: 30+ puzzles, schema-checked with zod
-- [ ] `puzzles/fingerprints.json`: generated expected-answer fingerprints, checked by a test
-- [ ] `src/`: rotation, grading, share string, storage, engine wrapper, UI
-- [ ] vitest unit tests + reference-answer test; Playwright smoke test
-- [ ] `.github/workflows/deploy.yml` (Pages), not enabled
-- [ ] README, RUNBOOK, CLAUDE.md, TASK.md (four-file skeleton)
+- [x] `scripts/fetch-data.ts`: downloads the subsets, writes `public/data/*.parquet`, records retrieval date
+- [x] `DATA_SOURCES.md`: source URL, license, retrieval date, subsetting rule and dropped columns per table
+- [x] `puzzles/*.yaml`: 30+ puzzles, schema-checked with zod
+- [x] `puzzles/fingerprints.json`: generated expected-answer fingerprints, checked by a test
+- [x] `src/`: rotation, grading, share string, storage, engine wrapper, UI
+- [x] vitest unit tests + reference-answer test; Playwright smoke test
+- [x] `.github/workflows/deploy.yml` (Pages), not enabled
+- [x] README, RUNBOOK, CLAUDE.md, TASK.md (four-file skeleton)
 
 ---
 
 ## Success Criteria
 
 ### Functional Requirements
-- [ ] Puzzle number derives from the calendar date in America/New_York; #1 is 2026-11-01; same date gives the same puzzle on every machine.
-- [ ] Submit grades by value: NULLs equal NULLs, numbers within the puzzle's tolerance, DATE equal to a midnight TIMESTAMP, row order only when `ordered: true`, column names only when `column_names: match`.
-- [ ] Feedback names the first problem: SQL error, column count, column names, row count, or the first differing row.
-- [ ] Share string: puzzle number, difficulty, attempt count, one square per attempt, link; never the answer.
-- [ ] Streak and history in localStorage behind try/catch; the page works when storage throws.
-- [ ] Archive lists every puzzle up to today with solved/attempted state; any can be played.
-- [ ] A runaway query is stopped after 15 s by terminating the worker; display is capped at 200 rows.
+- [x] Puzzle number derives from the calendar date in America/New_York; #1 is 2026-11-01; same date gives the same puzzle on every machine.
+- [x] Submit grades by value: NULLs equal NULLs, numbers within the puzzle's tolerance, DATE equal to a midnight TIMESTAMP, row order only when `ordered: true`, column names only when `column_names: match`.
+- [x] Feedback names the first problem: SQL error, column count, column names, row count, or the first differing row.
+- [x] Share string: puzzle number, difficulty, attempt count, one square per attempt, link; never the answer.
+- [x] Streak and history in localStorage behind try/catch; the page works when storage throws.
+- [x] Archive lists every puzzle up to today with solved/attempted state; any can be played.
+- [x] A runaway query is stopped after 15 s by terminating the worker; display is capped at 200 rows.
 
 ### Non-Functional Requirements
-- [ ] Data folder < 20 MB (test asserts it).
-- [ ] No runtime request leaves the site's origin (bundles self-hosted, no extension autoinstall).
-- [ ] Untrusted text (puzzle prose, result values, error messages) only ever set via `textContent`.
-- [ ] Usable at 360 px wide, keyboard only, in light and dark themes.
+- [x] Data folder < 20 MB (test asserts it).
+- [x] No runtime request leaves the site's origin (bundles self-hosted, no extension autoinstall).
+- [x] Untrusted text (puzzle prose, result values, error messages) only ever set via `textContent`.
+- [x] Usable at 360 px wide, keyboard only, in light and dark themes.
 
 ### Testing Requirements
-- [ ] Unit tests: grading (each feedback kind, tolerance, ordering, NULLs), rotation (timezone edges, DST, before launch), share string, storage fallback, schema (every file parses, ids unique and contiguous, datasets exist).
-- [ ] Integration: every reference SQL runs on the committed Parquet, returns ≥ 1 row, and matches `fingerprints.json`; each reference result grades as solved against itself.
-- [ ] E2E: page loads, today's reference SQL typed into the editor, Submit, "Solved" visible.
+- [x] Unit tests: grading (each feedback kind, tolerance, ordering, NULLs), rotation (timezone edges, DST, before launch), share string, storage fallback, schema (every file parses, ids unique and contiguous, datasets exist).
+- [x] Integration: every reference SQL runs on the committed Parquet, returns ≥ 1 row, and matches `fingerprints.json`; each reference result grades as solved against itself.
+- [x] E2E: page loads, today's reference SQL typed into the editor, Submit, "Solved" visible.
 
 ---
 
@@ -335,3 +335,4 @@ round-trips and all four downloads successfully.
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-11-01 | coding agent | Initial PRP created |
+| 2026-11-01 | coding agent | Executed. Deviation: the browser build of DuckDB-WASM does not link Parquet in (the Node build does), so gotcha 9 was wrong; the Parquet extension is now downloaded at build time with a pinned SHA-256 and served from `public/extensions/`. Found during execution: one shared temp table name let the background reference run and the visitor's Submit overwrite each other; each call now uses its own name. Tolerance became absolute (plus 1e-9 relative) after the abs-or-relative form proved too loose on large values. |
