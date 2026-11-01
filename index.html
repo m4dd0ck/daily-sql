@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="One SQL puzzle a day over real, messy public data. Write the query, run it in your browser with DuckDB, and get it graded."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Daily SQL</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#editor-heading">Skip to the editor</a>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-name">Daily SQL</span>
+        <span class="brand-tag" id="puzzle-label">Loading…</span>
+      </div>
+      <nav class="header-actions" aria-label="Site">
+        <button type="button" id="archive-button">Archive</button>
+        <button type="button" id="stats-button">Stats</button>
+        <button type="button" id="theme-button" aria-live="polite">Theme: system</button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="card" aria-labelledby="puzzle-title">
+        <p class="meta" id="puzzle-meta"></p>
+        <h1 id="puzzle-title">Loading today's puzzle…</h1>
+        <div id="puzzle-prompt" class="prose"></div>
+        <details class="tables" id="tables">
+          <summary>Tables for this puzzle</summary>
+          <div id="tables-body"></div>
+        </details>
+        <div class="hints">
+          <ol id="hint-list"></ol>
+          <button type="button" id="hint-button" class="secondary">Show a hint</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="editor-heading">
+        <h2 id="editor-heading">Your query</h2>
+        <div id="editor"></div>
+        <div class="editor-actions">
+          <button type="button" id="run-button" class="secondary" disabled>Run</button>
+          <button type="button" id="submit-button" class="primary" disabled>Submit</button>
+          <span class="keys"
+            ><kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> runs, add <kbd>Shift</kbd> to
+            submit</span
+          >
+        </div>
+        <p id="engine-status" class="status" role="status">Starting DuckDB…</p>
+        <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="card" aria-labelledby="result-heading" id="result-card" hidden>
+        <h2 id="result-heading">Result</h2>
+        <p id="result-summary" class="status"></p>
+        <div
+          class="table-scroll"
+          id="result-table"
+          tabindex="0"
+          aria-labelledby="result-heading"
+        ></div>
+      </section>
+
+      <section class="card solved" aria-labelledby="solved-heading" id="solved-card" hidden>
+        <h2 id="solved-heading">Why this works</h2>
+        <div id="explanation" class="prose"></div>
+        <details>
+          <summary>Reference query</summary>
+          <pre class="code" id="reference-sql"></pre>
+        </details>
+        <h3>Share</h3>
+        <pre class="share-preview" id="share-preview"></pre>
+        <button type="button" id="share-button" class="primary">Copy result</button>
+        <span id="share-status" class="status" role="status"></span>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p id="storage-note"></p>
+      <p>
+        Data: NYC Open Data (restaurant inspections, 311), CFPB Consumer Complaint Database, Our
+        World in Data (CC BY 4.0). One table is synthetic and named so.
+        <a href="https://github.com/m4dd0ck/daily-sql/blob/main/DATA_SOURCES.md"
+          >Sources and licenses</a
+        >
+        · <a href="https://github.com/m4dd0ck/daily-sql">Code</a>
+      </p>
+      <p>Queries run in your browser. Nothing you type is sent anywhere.</p>
+    </footer>
+
+    <dialog id="archive-dialog" aria-labelledby="archive-title">
+      <div class="dialog-head">
+        <h2 id="archive-title">Archive</h2>
+        <button type="button" class="close" data-close aria-label="Close archive">×</button>
+      </div>
+      <ol id="archive-list" class="archive-list" reversed></ol>
+    </dialog>
+
+    <dialog id="stats-dialog" aria-labelledby="stats-title">
+      <div class="dialog-head">
+        <h2 id="stats-title">Stats</h2>
+        <button type="button" class="close" data-close aria-label="Close stats">×</button>
+      </div>
+      <dl id="stats-list" class="stats-list"></dl>
+      <p class="status">
+        Streaks count puzzles solved on their own day. Archive solves do not count.
+      </p>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
