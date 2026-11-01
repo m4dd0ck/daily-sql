@@ -1,0 +1,43 @@
+id: 22
+slug: latest-delivery-wins
+title: Latest delivery wins
+difficulty: hard
+datasets: [synthetic_grade_feed]
+skills: [dedup, late-arriving, date-parsing]
+prompt: |
+  The synthetic feed sometimes delivers the same inspection (same `camis` and inspection
+  date) more than once: plain re-sends, and corrections that change the grade. The row with
+  the latest `loaded_at` is the truth.
+
+  Keeping only the latest delivery per inspection, how many inspections got each grade?
+  Return `grade` and `inspections`. The date text has four formats (see puzzle 21); two
+  rows for the same inspection may use different formats.
+hints:
+  - Parse the date first and dedupe on (camis, parsed date), not on the raw text.
+  - row_number() OVER (PARTITION BY camis, inspection_date ORDER BY loaded_at DESC) = 1
+reference_sql: |
+  WITH parsed AS (
+    SELECT camis, grade, loaded_at,
+      CAST(coalesce(
+        try_strptime(inspection_date_text, '%Y-%m-%d'),
+        try_strptime(inspection_date_text, '%m/%d/%Y'),
+        try_strptime(inspection_date_text, '%d %b %Y'),
+        try_strptime(inspection_date_text, '%Y%m%d')
+      ) AS DATE) AS inspection_date
+    FROM synthetic_grade_feed
+  ),
+  latest AS (
+    SELECT *
+    FROM parsed
+    QUALIFY row_number() OVER (PARTITION BY camis, inspection_date ORDER BY loaded_at DESC) = 1
+  )
+  SELECT grade, count(*) AS inspections
+  FROM latest
+  GROUP BY grade
+grading:
+  ordered: false
+explanation: |
+  Deduplicating on the raw text would keep two rows when a re-send used a different date
+  format, so the key has to be normalized before the dedupe. "Latest load wins" is how
+  most incremental models and CDC merges resolve conflicts. The feed was built so that
+  this gives back exactly the grades in the real inspections table.

@@ -1,0 +1,27 @@
+id: 18
+slug: timely-response-rate
+title: Timely response rate
+difficulty: easy
+datasets: [complaints]
+skills: [aggregation]
+prompt: |
+  Companies are expected to respond within 15 days; `timely_response` says whether they
+  did (`'Yes'` or `'No'`).
+
+  For each `sub_product`, return `pct_timely`: the percentage of complaints with a timely
+  response, rounded to 1 decimal.
+hints:
+  - 100.0 * count(*) FILTER (WHERE timely_response = 'Yes') / count(*)
+  - Multiply by 100.0, not 100, to stay out of integer division in other databases.
+reference_sql: |
+  SELECT sub_product,
+    round(100.0 * count(*) FILTER (WHERE timely_response = 'Yes') / count(*), 1) AS pct_timely
+  FROM complaints
+  GROUP BY sub_product
+grading:
+  ordered: false
+  tolerance: 0.051
+explanation: |
+  Private lenders answer on time 98.5% of the time; federal servicers 91.6%. In
+  PostgreSQL and SQL Server `count(*) / count(*)` is integer division and would print 0;
+  DuckDB's `/` always returns a decimal, and `//` is integer division.

@@ -1,0 +1,162 @@
+{
+  "requests-by-borough": {
+    "rows": 5,
+    "columns": 2,
+    "sha256": "97e814d323203d5c2b0e41b56a07c68fd84e544923fae18da9b110fcb606b68f"
+  },
+  "average-score-without-fan-out": {
+    "rows": 5,
+    "columns": 2,
+    "sha256": "723c53fc17e106f29e19c3c4d215247f1208618a252c15c2d23d3d3f4571213a"
+  },
+  "top-emitters": {
+    "rows": 10,
+    "columns": 2,
+    "sha256": "5448990801ff89ae5b58739d6a12d166c5aa83e8366b647e68ba0ec7340d4bbe"
+  },
+  "chain-locations": {
+    "rows": 5,
+    "columns": 2,
+    "sha256": "03f15230e1165955df69133ff26135b108f6e62d6091278afd305e5e9d2fa7e9"
+  },
+  "longest-growth-streak": {
+    "rows": 5,
+    "columns": 4,
+    "sha256": "3d1e58d022ece82f678fc7e314044cb7a2241e80619ab155f2c34b48819a2f4e"
+  },
+  "placeholder-text": {
+    "rows": 1,
+    "columns": 2,
+    "sha256": "350784e249a36d81d5181531cddb2eae4636223c1d35d35c88ec326a2e9ef047"
+  },
+  "median-hours-to-close": {
+    "rows": 12,
+    "columns": 2,
+    "sha256": "9ab085dd1a3832aa22e175e3da350e11a241f08de0a70767c42c3abe903c76bd"
+  },
+  "inspections-per-borough": {
+    "rows": 5,
+    "columns": 2,
+    "sha256": "f5b66969bc923e37da3c7d5a1b03b67948959969898f59a188335ff67f756f7f"
+  },
+  "heat-complaints-by-week": {
+    "rows": 13,
+    "columns": 2,
+    "sha256": "1171a3d445dd88db2c4d758ca64ecf5622e02df643a53dddd158e772a593d505"
+  },
+  "years-of-decline": {
+    "rows": 13,
+    "columns": 3,
+    "sha256": "6a2c7d1ddbfe336febfe7d6619d0170c8b177ba350b90a8ef692f4b4f97bd2b3"
+  },
+  "cohort-retention": {
+    "rows": 4,
+    "columns": 5,
+    "sha256": "2c77db8044edb884889b0522f8c4cede726f568d97ccd533aa827a17d8f80661"
+  },
+  "noisiest-hours": {
+    "rows": 3,
+    "columns": 2,
+    "sha256": "8c50a8e49c11098247856a0b1a6bc8f60eee8359900b1ac78ecb55dae97c1874"
+  },
+  "latest-grade": {
+    "rows": 5,
+    "columns": 3,
+    "sha256": "c2327e9acf9da9bb24e8c9d1a8127371ad014ff58fc4e255f723c5dab4e03d95"
+  },
+  "never-an-a": {
+    "rows": 5,
+    "columns": 2,
+    "sha256": "137fe706217ae227d6c9142acb41b5cfc3701b1504c96ef00ddc9248f6c3d512"
+  },
+  "zip-codes-without-restaurants": {
+    "rows": 17,
+    "columns": 2,
+    "sha256": "4da99338b472063baa4f0cc346d24cddfa4e415e3a1c8912484ea208ca9025d2"
+  },
+  "running-total": {
+    "rows": 25,
+    "columns": 3,
+    "sha256": "78b2e5e7e5afa55286cf32faae146eb6c134ee5dd5d090827e97b61a6401e8ed"
+  },
+  "federal-vs-private": {
+    "rows": 12,
+    "columns": 3,
+    "sha256": "b15873430529d34e292882c38a21013a76cf187c5550d0574821b841c3506f97"
+  },
+  "timely-response-rate": {
+    "rows": 2,
+    "columns": 2,
+    "sha256": "002af88e5c20e8485146c748d1e799a277823af90b8c61f2c989b8a6afbc6279"
+  },
+  "grade-as-of-new-year": {
+    "rows": 5,
+    "columns": 3,
+    "sha256": "25833dea7f892377f2358f2f176817554bc9879591d2a712633f07a276bde6ba"
+  },
+  "heat-streaks": {
+    "rows": 3,
+    "columns": 3,
+    "sha256": "d8aba6528c6ba297aea331f3314ae958b27157b6883f5b2ffb4b7bc1f8c44ea5"
+  },
+  "parse-mixed-dates": {
+    "rows": 12,
+    "columns": 2,
+    "sha256": "9e1e20ec6f4d7fc460ca6605b01425985994f75a8d5e583d68086500842861a5"
+  },
+  "latest-delivery-wins": {
+    "rows": 3,
+    "columns": 2,
+    "sha256": "4f61e4772454cf9fe44b0cdaf60b6eda2f3295ba302d6a76f07557bf81859fc6"
+  },
+  "march-report-restated": {
+    "rows": 3,
+    "columns": 3,
+    "sha256": "4b864f6355487e62ee62b72cd85e6051f4fbc6e04645602e4bf62be8bcae9e5c"
+  },
+  "rolling-average": {
+    "rows": 31,
+    "columns": 3,
+    "sha256": "b6a0c98ecbff53e1f5df1d08bbf8254a1c83dd53205be8dfede7c80e1d80b2e8"
+  },
+  "top-violations-per-cuisine": {
+    "rows": 10,
+    "columns": 3,
+    "sha256": "b39dc1918797f6e4ed6823a5520eabf2a56e01ad4c0ea6df921c12800e5cfe1a"
+  },
+  "last-known-gdp": {
+    "rows": 16,
+    "columns": 3,
+    "sha256": "d3ab4698f1ef0f6cc45c77cbc429d5a9ace4924e10c53529dc51f419c28fc2b8"
+  },
+  "per-capita-rank": {
+    "rows": 10,
+    "columns": 3,
+    "sha256": "11128d865b0288a94d92539fbb405129f91fbef91d03251f5736a6c0306b67a6"
+  },
+  "closed-within-a-day": {
+    "rows": 5,
+    "columns": 3,
+    "sha256": "cffddd354a992da90fe91b14768cac7a571b5acd314b9b18c13fe0920b6180b0"
+  },
+  "exact-duplicates": {
+    "rows": 1,
+    "columns": 1,
+    "sha256": "687f9fd8028263ba0b5b25796007167bee9bb562f8d7047b1c89bec8fbbc8ad9"
+  },
+  "grade-periods": {
+    "rows": 4,
+    "columns": 3,
+    "sha256": "30a30d3458d5197f832b592744cdf7ec2ebadb5236b2eaf01d576e4bd4f491da"
+  },
+  "awaiting-first-inspection": {
+    "rows": 6,
+    "columns": 2,
+    "sha256": "47744fedc030a8a563a95eb1f7cf1fb97c55ac386f2054fff7ff8e49cafbce38"
+  },
+  "forwarded-same-day": {
+    "rows": 5,
+    "columns": 3,
+    "sha256": "990005c608a6031ba23617526a5bfc2130e6faeac2081f3eb8820286529d8dee"
+  }
+}

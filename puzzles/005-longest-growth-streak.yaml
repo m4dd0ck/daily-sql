@@ -1,0 +1,41 @@
+id: 5
+slug: longest-growth-streak
+title: Longest run of rising emissions
+difficulty: hard
+datasets: [emissions]
+skills: [gaps-islands, window]
+prompt: |
+  For each country (rows with an `iso_code`), a year "rises" when its `co2` is higher than
+  the same country's `co2` in the previous calendar year. Both years need a value.
+
+  Find the five longest unbroken runs of rising years. Return `country`, `first_year`,
+  `last_year` and `years` (the number of rising years in the run). Longest first, ties by
+  country name.
+hints:
+  - Join each row to the same country's row for year - 1, or use LAG and check the year gap.
+  - In a run of consecutive years, year minus row_number() is constant. Group by it.
+reference_sql: |
+  WITH rising AS (
+    SELECT cur.country, cur.year
+    FROM emissions AS cur
+    JOIN emissions AS prev
+      ON prev.country = cur.country AND prev.year = cur.year - 1
+    WHERE cur.iso_code IS NOT NULL AND cur.co2 > prev.co2
+  ),
+  islands AS (
+    SELECT country, year,
+      year - row_number() OVER (PARTITION BY country ORDER BY year) AS island
+    FROM rising
+  )
+  SELECT country, min(year) AS first_year, max(year) AS last_year, count(*) AS years
+  FROM islands
+  GROUP BY country, island
+  ORDER BY years DESC, country
+  LIMIT 5
+grading:
+  ordered: true
+explanation: |
+  This is the classic gaps-and-islands trick. Number the qualifying rows in order; when
+  the years are consecutive, `year - row_number()` stays the same, and it jumps whenever a
+  year is missing. That difference is an island id you can GROUP BY. India rose for 55
+  years in a row, from 1965 to 2019, and the run ended with the 2020 pandemic dip.

@@ -1,0 +1,30 @@
+id: 9
+slug: heat-complaints-by-week
+title: Heat complaints by week
+difficulty: medium
+datasets: [service_requests]
+skills: [date-bucketing]
+prompt: |
+  Landlords must provide heat in winter, and tenants report failures through 311 as
+  `complaint_type = 'HEAT/HOT WATER'`.
+
+  Count those requests per week for January to March 2024 (created before 1 April 2024).
+  Weeks start on Monday. Return `week_start` as a DATE and `requests`, in date order.
+hints:
+  - date_trunc('week', ts) truncates to the Monday of that week.
+  - Cast the result to DATE so it compares as a date.
+reference_sql: |
+  SELECT CAST(date_trunc('week', created_date) AS DATE) AS week_start,
+    count(*) AS requests
+  FROM service_requests
+  WHERE complaint_type = 'HEAT/HOT WATER'
+    AND created_date < TIMESTAMP '2024-04-01'
+  GROUP BY week_start
+  ORDER BY week_start
+grading:
+  ordered: true
+explanation: |
+  `date_trunc` is the workhorse of time series reporting. The week of 15 January stands
+  out at more than double its neighbours, which lines up with the cold snap New York had
+  that week. If a week had no requests at all it would be missing from this
+  result rather than showing zero; puzzle 24 deals with that.

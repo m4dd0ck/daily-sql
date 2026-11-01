@@ -1,0 +1,41 @@
+id: 13
+slug: latest-grade
+title: Latest grade per restaurant
+difficulty: medium
+datasets: [inspections]
+skills: [dedup, window]
+prompt: |
+  Restaurants get a letter grade (`A`, `B` or `C`) on some inspections; other rows have
+  NULL or administrative codes (`N`, `P`, `Z`) in `grade`. The grade is repeated on every
+  violation row of the inspection.
+
+  Take each restaurant's most recent letter grade (latest `grade_date` among A/B/C rows).
+  For each `boro` (excluding `'0'`), return `graded_restaurants` (restaurants with any
+  letter grade) and `grade_c` (those whose latest letter grade is C).
+hints:
+  - row_number() OVER (PARTITION BY camis ORDER BY grade_date DESC) = 1 keeps the latest.
+  - Filter to A/B/C before ranking, or a later N or Z row will win.
+reference_sql: |
+  WITH graded AS (
+    SELECT DISTINCT camis, boro, grade_date, grade
+    FROM inspections
+    WHERE grade IN ('A', 'B', 'C') AND boro <> '0'
+  ),
+  latest AS (
+    SELECT *
+    FROM graded
+    QUALIFY row_number() OVER (PARTITION BY camis ORDER BY grade_date DESC) = 1
+  )
+  SELECT boro,
+    count(*) AS graded_restaurants,
+    count(*) FILTER (WHERE grade = 'C') AS grade_c
+  FROM latest
+  GROUP BY boro
+grading:
+  ordered: false
+explanation: |
+  "Latest row per key" is the most-written window query in analytics, and it has two
+  traps here. The grade is repeated on every violation row, so dedupe to one row per
+  grade before ranking. And the latest row overall may carry an administrative code
+  instead of a letter, so the filter has to come before the ranking, not after.
+  DuckDB's QUALIFY saves a subquery; elsewhere wrap it and filter on rn = 1.

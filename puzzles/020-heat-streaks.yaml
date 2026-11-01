@@ -1,0 +1,37 @@
+id: 20
+slug: heat-streaks
+title: Heat complaint streaks
+difficulty: medium
+datasets: [service_requests]
+skills: [gaps-islands, date-bucketing]
+prompt: |
+  Call a day "busy" when it has at least 10 `'HEAT/HOT WATER'` requests in this sample.
+
+  Find the three longest runs of consecutive busy days. Return `first_day`, `last_day`
+  (DATEs) and `busy_days`, longest first, ties by earliest first_day.
+hints:
+  - Count per day first, keep the busy days.
+  - day minus row_number() (as days) is constant inside a run of consecutive days.
+reference_sql: |
+  WITH busy AS (
+    SELECT CAST(created_date AS DATE) AS day
+    FROM service_requests
+    WHERE complaint_type = 'HEAT/HOT WATER'
+    GROUP BY day
+    HAVING count(*) >= 10
+  ),
+  runs AS (
+    SELECT day, day - CAST(row_number() OVER (ORDER BY day) AS INTEGER) AS run_id
+    FROM busy
+  )
+  SELECT min(day) AS first_day, max(day) AS last_day, count(*) AS busy_days
+  FROM runs
+  GROUP BY run_id
+  ORDER BY busy_days DESC, first_day
+  LIMIT 3
+grading:
+  ordered: true
+explanation: |
+  The same island trick as puzzle 5, on dates: subtracting the row number (as a number
+  of days) from each busy day gives the same anchor date for every day in a run. DuckDB
+  lets you subtract an integer from a DATE directly; in other engines use an interval.

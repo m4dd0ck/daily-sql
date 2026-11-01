@@ -1,0 +1,55 @@
+id: 23
+slug: march-report-restated
+title: What the March report said
+difficulty: hard
+datasets: [synthetic_grade_feed]
+skills: [late-arriving, dedup, date-parsing]
+prompt: |
+  The monthly grade report for inspections in March 2025 ran at 00:00 on 5 April 2025,
+  using every `synthetic_grade_feed` row loaded before then (latest load
+  per inspection, as in puzzle 22). Rows keep arriving late, so today's numbers for the
+  same month differ.
+
+  Return one row per grade `A`, `B`, `C` with `grade`, `as_reported` (inspections with that
+  grade using rows loaded before `2025-04-05 00:00:00`) and `restated` (using all rows),
+  in grade order. Show 0 rather than leaving a grade out.
+hints:
+  - Parse the dates, keep March 2025 inspections, then dedupe twice, once with the load cut-off and once without.
+  - A VALUES list of the three grades, LEFT JOINed to the counts, keeps a grade with no rows.
+reference_sql: |
+  WITH parsed AS (
+    SELECT camis, grade, loaded_at,
+      CAST(coalesce(
+        try_strptime(inspection_date_text, '%Y-%m-%d'),
+        try_strptime(inspection_date_text, '%m/%d/%Y'),
+        try_strptime(inspection_date_text, '%d %b %Y'),
+        try_strptime(inspection_date_text, '%Y%m%d')
+      ) AS DATE) AS inspection_date
+    FROM synthetic_grade_feed
+  ),
+  march AS (
+    SELECT * FROM parsed
+    WHERE inspection_date >= DATE '2025-03-01' AND inspection_date < DATE '2025-04-01'
+  ),
+  reported AS (
+    SELECT grade FROM march
+    WHERE loaded_at < TIMESTAMP '2025-04-05 00:00:00'
+    QUALIFY row_number() OVER (PARTITION BY camis, inspection_date ORDER BY loaded_at DESC) = 1
+  ),
+  restated AS (
+    SELECT grade FROM march
+    QUALIFY row_number() OVER (PARTITION BY camis, inspection_date ORDER BY loaded_at DESC) = 1
+  )
+  SELECT g.grade,
+    (SELECT count(*) FROM reported AS r WHERE r.grade = g.grade) AS as_reported,
+    (SELECT count(*) FROM restated AS r WHERE r.grade = g.grade) AS restated
+  FROM (VALUES ('A'), ('B'), ('C')) AS g(grade)
+  ORDER BY g.grade
+grading:
+  ordered: true
+explanation: |
+  Late-arriving data means a closed period keeps changing. Reproducing what a report
+  said on the day it ran ("as of load time") is the same latest-row-per-key logic with a
+  filter on the load timestamp instead of the business date. Teams usually handle it by
+  either restating past periods (and saying so) or freezing them and booking late rows
+  into the current period; both need this query to explain the difference.

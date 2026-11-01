@@ -1,0 +1,46 @@
+id: 25
+slug: top-violations-per-cuisine
+title: Top violations per cuisine
+difficulty: medium
+datasets: [inspections]
+skills: [top-n, window, null-handling]
+prompt: |
+  Take the five cuisines with the most restaurants (distinct `camis`). Restaurants not yet
+  inspected have no cuisine; they are not a cuisine. If two cuisines tie, take them
+  alphabetically.
+
+  For each of those cuisines, return its two most cited violation codes:
+  `cuisine_description`, `violation_code` and `citations` (rows with that code). Break ties
+  by code. Ignore rows with no violation code.
+hints:
+  - Start with a CTE of the top five cuisines, WHERE cuisine_description IS NOT NULL.
+  - Then count per (cuisine, code) and keep row_number() per cuisine <= 2.
+reference_sql: |
+  WITH top_cuisines AS (
+    SELECT cuisine_description
+    FROM inspections
+    WHERE cuisine_description IS NOT NULL
+    GROUP BY cuisine_description
+    ORDER BY count(DISTINCT camis) DESC, cuisine_description
+    LIMIT 5
+  ),
+  cited AS (
+    SELECT cuisine_description, violation_code, count(*) AS citations
+    FROM inspections
+    WHERE violation_code IS NOT NULL
+      AND cuisine_description IN (SELECT cuisine_description FROM top_cuisines)
+    GROUP BY cuisine_description, violation_code
+  )
+  SELECT cuisine_description, violation_code, citations
+  FROM cited
+  QUALIFY row_number() OVER (
+    PARTITION BY cuisine_description ORDER BY citations DESC, violation_code
+  ) <= 2
+grading:
+  ordered: false
+explanation: |
+  Top-N-per-group is row_number() partitioned by the group. The NULL cuisine is the second
+  biggest "cuisine" by restaurant count, because every restaurant awaiting its first
+  inspection has a placeholder row with no cuisine; leaving it in quietly pushes Mexican
+  out. The cut between Mexican (114) and Italian (113) is one restaurant wide. 10F
+  (non-food contact surfaces) leads everywhere.

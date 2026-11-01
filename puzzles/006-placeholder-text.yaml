@@ -1,0 +1,30 @@
+id: 6
+slug: placeholder-text
+title: When "None" is not NULL
+difficulty: easy
+datasets: [complaints]
+skills: [null-handling]
+prompt: |
+  The complaint export writes missing values as the text `'None'` rather than leaving
+  them empty.
+
+  Return one row with two columns: `missing_state`, the number of complaints whose `state`
+  is NULL or `'None'`, and `missing_public_response`, the same for
+  `company_public_response`.
+hints:
+  - count(*) FILTER (WHERE ...) counts a subset without a subquery.
+  - Check both IS NULL and = 'None'.
+reference_sql: |
+  SELECT
+    count(*) FILTER (WHERE state IS NULL OR state = 'None') AS missing_state,
+    count(*) FILTER (
+      WHERE company_public_response IS NULL OR company_public_response = 'None'
+    ) AS missing_public_response
+  FROM complaints
+grading:
+  ordered: true
+explanation: |
+  `'None'` is what a Python export writes for a missing value, and here it reaches you as
+  a real string. `count(state)` counts it, `state IS NULL` misses it, and a GROUP BY state
+  gives it a bar in the chart. In a staging model the fix is one line,
+  `nullif(state, 'None')`, applied once so nothing downstream has to know.

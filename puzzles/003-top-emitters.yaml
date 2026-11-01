@@ -1,0 +1,31 @@
+id: 3
+slug: top-emitters
+title: Top emitters, countries only
+difficulty: easy
+datasets: [emissions]
+skills: [null-handling, top-n]
+prompt: |
+  `emissions` mixes countries with regions and groups such as `World`, `Asia`,
+  `High-income countries` and `Europe (GCP)`.
+
+  Which ten countries emitted the most CO2 in 2023? Treat a row as a country when it has
+  an `iso_code`. Return `country` and `co2` (million tonnes, rounded to 1 decimal),
+  largest first.
+hints:
+  - Aggregates have a NULL iso_code.
+  - ORDER BY co2 DESC LIMIT 10.
+reference_sql: |
+  SELECT country, round(co2, 1) AS co2
+  FROM emissions
+  WHERE year = 2023 AND iso_code IS NOT NULL
+  ORDER BY co2 DESC
+  LIMIT 10
+grading:
+  ordered: true
+  tolerance: 0.051
+explanation: |
+  Without the filter the top of the list is World, then Asia, then several income
+  groups. Our World in Data puts aggregates in the same table as countries, which is
+  convenient for charts and a trap for SUM. One wrinkle: Kosovo is a country with no ISO
+  code in this file, so the "has an iso_code" rule is a rule, not the truth. It does not
+  change this top ten.

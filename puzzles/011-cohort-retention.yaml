@@ -1,0 +1,48 @@
+id: 11
+slug: cohort-retention
+title: Company complaint cohorts
+difficulty: hard
+datasets: [complaints]
+skills: [cohort, date-bucketing]
+prompt: |
+  Treat each `company` like a customer and a complaint like activity. A company's cohort
+  is the quarter of its first complaint in this data. A company is "active" in a quarter
+  if it has at least one complaint received in it.
+
+  For the four 2023 cohorts, return `cohort` (first day of the quarter, as a DATE),
+  `companies` (cohort size) and `q1`, `q2`, `q3`: the percentage of the cohort active 1, 2
+  and 3 quarters after the cohort quarter, rounded to 1 decimal. Order by cohort.
+hints:
+  - First build one row per (company, active quarter) with date_trunc('quarter', ...).
+  - min(quarter) per company is the cohort. date_diff('quarter', cohort, quarter) is the offset.
+  - count(DISTINCT company) FILTER (WHERE offset = 1) counts the active ones per offset.
+reference_sql: |
+  WITH activity AS (
+    SELECT DISTINCT company, CAST(date_trunc('quarter', date_received) AS DATE) AS quarter
+    FROM complaints
+  ),
+  cohorts AS (
+    SELECT company, min(quarter) AS cohort FROM activity GROUP BY company
+  ),
+  offsets AS (
+    SELECT c.cohort, c.company, date_diff('quarter', c.cohort, a.quarter) AS quarter_offset
+    FROM cohorts AS c JOIN activity AS a USING (company)
+  )
+  SELECT cohort,
+    count(DISTINCT company) AS companies,
+    round(100.0 * count(DISTINCT company) FILTER (WHERE quarter_offset = 1) / count(DISTINCT company), 1) AS q1,
+    round(100.0 * count(DISTINCT company) FILTER (WHERE quarter_offset = 2) / count(DISTINCT company), 1) AS q2,
+    round(100.0 * count(DISTINCT company) FILTER (WHERE quarter_offset = 3) / count(DISTINCT company), 1) AS q3
+  FROM offsets
+  WHERE cohort < DATE '2024-01-01'
+  GROUP BY cohort
+  ORDER BY cohort
+grading:
+  ordered: true
+  tolerance: 0.051
+explanation: |
+  This is the standard retention triangle, applied to an unusual "customer". The shape is
+  always the same: activity at a fixed grain, a first-seen date per entity, then a
+  count by (cohort, offset). The first cohort is left-censored: "first complaint in
+  2023-Q1" really means "first complaint since the data starts", which is why that cohort
+  is large and full of the big loan servicers that get complaints every quarter.

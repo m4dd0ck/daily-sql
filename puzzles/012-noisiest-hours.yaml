@@ -1,0 +1,26 @@
+id: 12
+slug: noisiest-hours
+title: The noisiest hours
+difficulty: easy
+datasets: [service_requests]
+skills: [date-bucketing, top-n]
+prompt: |
+  At what hours of the day do people report `'Noise - Residential'`?
+
+  Return the three busiest hours as `hour` (0-23, from `created_date`) and `requests`,
+  busiest first.
+hints:
+  - hour(created_date) extracts the hour.
+reference_sql: |
+  SELECT hour(created_date) AS hour, count(*) AS requests
+  FROM service_requests
+  WHERE complaint_type = 'Noise - Residential'
+  GROUP BY hour
+  ORDER BY requests DESC
+  LIMIT 3
+grading:
+  ordered: true
+explanation: |
+  Late evening, unsurprisingly: 10 pm, 11 pm and midnight. Note that `created_date` is
+  local New York time with no time zone attached, which is what you want here. Had it been
+  UTC, every hour would be off by four or five depending on daylight saving time.

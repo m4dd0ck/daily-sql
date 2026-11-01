@@ -1,0 +1,36 @@
+id: 14
+slug: never-an-a
+title: Never earned an A
+difficulty: medium
+datasets: [inspections]
+skills: [anti-join]
+prompt: |
+  Among restaurants that have at least one letter grade (`A`, `B` or `C`), some have never
+  received an `A`.
+
+  Which five cuisines (`cuisine_description`) have the most such restaurants? Return
+  `cuisine_description` and `restaurants`, most first, ties broken alphabetically.
+hints:
+  - NOT EXISTS (SELECT 1 FROM inspections a WHERE a.camis = i.camis AND a.grade = 'A')
+  - Or GROUP BY camis HAVING count(*) FILTER (WHERE grade = 'A') = 0.
+  - Count each restaurant once.
+reference_sql: |
+  WITH never_a AS (
+    SELECT camis, any_value(cuisine_description) AS cuisine_description
+    FROM inspections
+    WHERE grade IN ('A', 'B', 'C')
+    GROUP BY camis
+    HAVING count(*) FILTER (WHERE grade = 'A') = 0
+  )
+  SELECT cuisine_description, count(*) AS restaurants
+  FROM never_a
+  GROUP BY cuisine_description
+  ORDER BY restaurants DESC, cuisine_description
+  LIMIT 5
+grading:
+  ordered: true
+explanation: |
+  "Has never done X" is an anti-join: keep the rows with no match on the other side.
+  NOT EXISTS, LEFT JOIN ... WHERE right.key IS NULL and GROUP BY ... HAVING with a
+  filtered count all work. The tie-breaker matters: Latin American and Mexican both have
+  8, and without the alphabetical rule the fifth row would be a coin toss.

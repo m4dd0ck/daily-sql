@@ -1,0 +1,32 @@
+id: 10
+slug: years-of-decline
+title: Years US emissions fell
+difficulty: medium
+datasets: [emissions]
+skills: [window]
+prompt: |
+  In which years from 2001 onward did United States CO2 emissions fall compared with
+  the year before?
+
+  Return `year`, `co2` and `change` (this year minus last year), both in million tonnes
+  and rounded to 1 decimal at the end, in year order.
+hints:
+  - lag(co2) OVER (ORDER BY year) is last year's value.
+  - Compute the lag before filtering years, or 2001 has no previous row.
+  - QUALIFY filters on a window function result.
+reference_sql: |
+  SELECT year, round(co2, 1) AS co2, round(change, 1) AS change
+  FROM (
+    SELECT year, co2, co2 - lag(co2) OVER (ORDER BY year) AS change
+    FROM emissions
+    WHERE country = 'United States'
+  )
+  WHERE year >= 2001 AND change < 0
+  ORDER BY year
+grading:
+  ordered: true
+explanation: |
+  Window functions run after WHERE, so filtering to `year >= 2001` in the same query
+  as the LAG would leave 2001 with no previous year. Compute first, then filter, either in
+  a subquery or with QUALIFY. The list reads like an economic history: 2009 (recession),
+  2012 (cheap gas replacing coal), 2020 (pandemic).

@@ -1,0 +1,34 @@
+id: 32
+slug: forwarded-same-day
+title: Forwarded the same day
+difficulty: medium
+datasets: [complaints]
+skills: [date-bucketing, top-n]
+prompt: |
+  The CFPB forwards each complaint to the company (`date_sent_to_company`) after it is
+  received (`date_received`).
+
+  For the five companies with the most complaints, return `company`, `complaints` and
+  `pct_same_day`: the percentage forwarded on the same calendar day it was received,
+  rounded to 1 decimal. Most complaints first.
+hints:
+  - CAST both timestamps to DATE before comparing.
+  - ORDER BY complaints DESC LIMIT 5 after aggregating.
+reference_sql: |
+  SELECT company,
+    count(*) AS complaints,
+    round(100.0 * count(*) FILTER (
+      WHERE CAST(date_sent_to_company AS DATE) = CAST(date_received AS DATE)
+    ) / count(*), 1) AS pct_same_day
+  FROM complaints
+  GROUP BY company
+  ORDER BY complaints DESC
+  LIMIT 5
+grading:
+  ordered: true
+  tolerance: 0.051
+explanation: |
+  Comparing calendar days is a different question from "within 24 hours": a complaint
+  received at 23:50 and sent at 00:10 is 20 minutes but not the same day. These timestamps
+  are UTC, so "same day" here means same UTC day; in local time a few would move. Most
+  complaints go out the same day; Maximus is the outlier at about 71%.

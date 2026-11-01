@@ -1,0 +1,44 @@
+id: 4
+slug: chain-locations
+title: How many locations per chain?
+difficulty: medium
+datasets: [inspections]
+skills: [string-cleanup, aggregation]
+prompt: |
+  Chains are spelled many ways in `dba` (the trading name): `DUNKIN`, `Dunkin`,
+  `DUNKIN'`, `DUNKIN' DONUTS`, `STARBUCKS COFFEE # 26528`, `MCDONALDS`...
+
+  Count restaurants (distinct `camis`) for five brands: a restaurant belongs to a brand
+  when its name, ignoring case, starts with `DUNKIN`, `STARBUCKS`, `SUBWAY`, `MCDONALD`
+  or `POPEYES`. Return `brand` as exactly `Dunkin`, `Starbucks`, `Subway`, `McDonald's`
+  or `Popeyes`, and `locations`. Most locations first, ties by brand name.
+hints:
+  - upper(dba) LIKE 'DUNKIN%' matches every spelling that starts with the brand.
+  - A CASE expression maps each pattern to the clean brand name.
+  - Count DISTINCT camis, not rows; each restaurant has many inspection rows.
+reference_sql: |
+  WITH branded AS (
+    SELECT camis,
+      CASE
+        WHEN upper(dba) LIKE 'DUNKIN%' THEN 'Dunkin'
+        WHEN upper(dba) LIKE 'STARBUCKS%' THEN 'Starbucks'
+        WHEN upper(dba) LIKE 'SUBWAY%' THEN 'Subway'
+        WHEN upper(dba) LIKE 'MCDONALD%' THEN 'McDonald''s'
+        WHEN upper(dba) LIKE 'POPEYES%' THEN 'Popeyes'
+      END AS brand
+    FROM inspections
+  )
+  SELECT brand, count(DISTINCT camis) AS locations
+  FROM branded
+  WHERE brand IS NOT NULL
+  GROUP BY brand
+  ORDER BY locations DESC, brand
+grading:
+  ordered: true
+explanation: |
+  Free-text names are entered by hand, so the same brand shows up in caps, title case,
+  with and without an apostrophe, with store numbers, and joined with a second brand
+  (`DUNKIN' / BASKIN ROBBINS`). A prefix match on the upper-cased name catches most of
+  them. It also shows the limits of rules: `MACY'S STARBUCKS` and `GARDEN MARKET, DUNKIN`
+  are left out by the prefix rule. In a real model this mapping would live in a seed
+  table that someone owns, not in a CASE buried in one query.

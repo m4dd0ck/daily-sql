@@ -1,0 +1,39 @@
+id: 21
+slug: parse-mixed-dates
+title: Four date formats in one column
+difficulty: medium
+datasets: [synthetic_grade_feed]
+skills: [date-parsing, date-bucketing]
+prompt: |
+  `synthetic_grade_feed` is a made-up vendor feed of inspection grades (built from the
+  real inspections). Its `inspection_date_text` mixes four formats: `2025-03-05`,
+  `03/05/2025`, `05 Mar 2025` and `20250305`.
+
+  Count feed rows per month of the inspection date for 2025. Return `month` (first day
+  of the month, as a DATE) and `deliveries`, in month order.
+hints:
+  - try_strptime(text, format) returns NULL instead of failing when the format does not match.
+  - coalesce() over the four attempts picks the one that worked.
+reference_sql: |
+  WITH parsed AS (
+    SELECT CAST(coalesce(
+      try_strptime(inspection_date_text, '%Y-%m-%d'),
+      try_strptime(inspection_date_text, '%m/%d/%Y'),
+      try_strptime(inspection_date_text, '%d %b %Y'),
+      try_strptime(inspection_date_text, '%Y%m%d')
+    ) AS DATE) AS inspection_date
+    FROM synthetic_grade_feed
+  )
+  SELECT CAST(date_trunc('month', inspection_date) AS DATE) AS month, count(*) AS deliveries
+  FROM parsed
+  WHERE inspection_date >= DATE '2025-01-01' AND inspection_date < DATE '2026-01-01'
+  GROUP BY month
+  ORDER BY month
+grading:
+  ordered: true
+explanation: |
+  Mixed formats usually mean several upstream systems writing to one column. Parse each
+  known format with a non-failing parser and coalesce. Then check that nothing is left
+  NULL, because a fifth format you did not know about would vanish silently from the
+  counts. The order of the attempts matters when formats are ambiguous: `03/05/2025` is
+  March in the US and May in most of Europe.

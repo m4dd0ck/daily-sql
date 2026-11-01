@@ -1,0 +1,26 @@
+id: 1
+slug: requests-by-borough
+title: Requests by borough
+difficulty: easy
+datasets: [service_requests]
+skills: [aggregation, null-handling]
+prompt: |
+  The city wants a one-line-per-borough count of 311 requests in this 2024 sample.
+
+  Return `borough` and `requests`, busiest borough first. Some requests have `borough`
+  set to the text `'Unspecified'`; leave those out.
+hints:
+  - GROUP BY borough and count the rows.
+  - A WHERE clause can drop the placeholder before grouping.
+reference_sql: |
+  SELECT borough, count(*) AS requests
+  FROM service_requests
+  WHERE borough <> 'Unspecified'
+  GROUP BY borough
+  ORDER BY requests DESC
+grading:
+  ordered: true
+explanation: |
+  A warm-up, but note that the missing value is not NULL: the source writes the word
+  `Unspecified`. Placeholder text like this survives every IS NULL check, so it is worth
+  listing the distinct values of any column before trusting it.

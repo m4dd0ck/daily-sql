@@ -1,0 +1,29 @@
+id: 15
+slug: zip-codes-without-restaurants
+title: ZIP codes with no restaurants
+difficulty: hard
+datasets: [service_requests, inspections]
+skills: [anti-join, null-handling]
+prompt: |
+  Which ZIP codes appear in 311 requests (`incident_zip`) but never as a restaurant
+  `zipcode` in `inspections`?
+
+  Return `incident_zip` and `requests` (311 requests from that ZIP). Ignore requests with
+  no ZIP. Some restaurants have no ZIP either.
+hints:
+  - Try NOT IN first and look at the row count.
+  - x NOT IN (list containing NULL) is never true. Filter the NULLs out, or use NOT EXISTS.
+reference_sql: |
+  SELECT s.incident_zip, count(*) AS requests
+  FROM service_requests AS s
+  WHERE s.incident_zip IS NOT NULL
+    AND NOT EXISTS (SELECT 1 FROM inspections AS i WHERE i.zipcode = s.incident_zip)
+  GROUP BY s.incident_zip
+grading:
+  ordered: false
+explanation: |
+  `NOT IN (SELECT zipcode FROM inspections)` returns nothing at all, because 289
+  inspection rows have a NULL zipcode, and `x NOT IN (..., NULL)` evaluates to NULL rather
+  than true. It is the best-known three-valued-logic trap in SQL, and it fails silently.
+  NOT EXISTS has no such problem. Remember the restaurant table is a 10% sample, so "no
+  restaurant here" means "none in the sample"; 10474 (Hunts Point) tops the list.

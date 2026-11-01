@@ -1,0 +1,47 @@
+id: 30
+slug: grade-periods
+title: Build grade validity periods
+difficulty: hard
+datasets: [inspections]
+skills: [scd, gaps-islands, window]
+prompt: |
+  Turn one restaurant's grade history into type 2 slowly changing dimension rows.
+
+  For `camis = 50066927`, take its A/B/C grades by `grade_date`. Consecutive grades that
+  are the same letter belong to one period. Return `grade`, `valid_from` (first
+  grade_date of the period) and `valid_to` (the valid_from of the next period, NULL for
+  the current one), in valid_from order.
+hints:
+  - Flag a row as a new period when its grade differs from lag(grade).
+  - A running sum of the flags numbers the periods.
+  - lead(valid_from) over the periods gives valid_to.
+reference_sql: |
+  WITH grades AS (
+    SELECT DISTINCT grade_date, grade
+    FROM inspections
+    WHERE camis = 50066927 AND grade IN ('A', 'B', 'C')
+  ),
+  flagged AS (
+    SELECT *,
+      CASE WHEN grade = lag(grade) OVER (ORDER BY grade_date) THEN 0 ELSE 1 END AS is_new
+    FROM grades
+  ),
+  numbered AS (
+    SELECT *, sum(is_new) OVER (ORDER BY grade_date) AS period_id FROM flagged
+  ),
+  periods AS (
+    SELECT period_id, any_value(grade) AS grade, min(grade_date) AS valid_from
+    FROM numbered
+    GROUP BY period_id
+  )
+  SELECT grade, valid_from, lead(valid_from) OVER (ORDER BY valid_from) AS valid_to
+  FROM periods
+  ORDER BY valid_from
+grading:
+  ordered: true
+explanation: |
+  The restaurant went A, B, C, then A twice. The two A inspections in 2025 are one period,
+  not two; collapsing repeats is what separates a change history from an event log. The
+  flag-then-running-sum pattern numbers the periods, and lead() closes each one where the
+  next begins. Half-open intervals (valid_from inclusive, valid_to exclusive) make
+  point-in-time joins simple: `d >= valid_from AND (d < valid_to OR valid_to IS NULL)`.

@@ -1,0 +1,43 @@
+id: 19
+slug: grade-as-of-new-year
+title: What grade was posted on New Year's Day?
+difficulty: hard
+datasets: [inspections]
+skills: [scd, window]
+prompt: |
+  A restaurant's letter grade stays posted until the next letter grade replaces it, so
+  the grade is a slowly changing attribute with `grade_date` as its start date.
+
+  As of 1 January 2025, what share of graded restaurants in each borough had an A posted?
+  Use each restaurant's latest A/B/C grade with `grade_date` on or before 2025-01-01.
+  Return `boro` (excluding `'0'`), `graded` (restaurants with a grade by then) and `pct_a`
+  rounded to 1 decimal.
+hints:
+  - This is "latest row per key" with a date cut-off applied first.
+  - Restaurants whose first grade came after 2025-01-01 are not in the denominator.
+reference_sql: |
+  WITH grades AS (
+    SELECT DISTINCT camis, boro, grade_date, grade
+    FROM inspections
+    WHERE grade IN ('A', 'B', 'C') AND boro <> '0'
+  ),
+  posted AS (
+    SELECT *
+    FROM grades
+    WHERE grade_date <= DATE '2025-01-01'
+    QUALIFY row_number() OVER (PARTITION BY camis ORDER BY grade_date DESC) = 1
+  )
+  SELECT boro,
+    count(*) AS graded,
+    round(100.0 * count(*) FILTER (WHERE grade = 'A') / count(*), 1) AS pct_a
+  FROM posted
+  GROUP BY boro
+grading:
+  ordered: false
+  tolerance: 0.051
+explanation: |
+  A point-in-time ("as of") query over a type 2 history: cut the history at the date,
+  then take the latest version per key. The order matters. Ranking first and cutting
+  after would drop every restaurant that has been re-graded since, instead of showing
+  the grade it had then. dbt snapshots produce exactly this shape with dbt_valid_from and
+  dbt_valid_to columns; puzzle 30 builds those intervals.

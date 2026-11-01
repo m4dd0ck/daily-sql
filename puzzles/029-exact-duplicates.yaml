@@ -1,0 +1,24 @@
+id: 29
+slug: exact-duplicates
+title: Exact duplicate rows
+difficulty: easy
+datasets: [inspections]
+skills: [dedup]
+prompt: |
+  Some rows in `inspections` are exact copies of another row, every column equal.
+
+  Return one row with `duplicate_rows`: how many rows would disappear if the table were
+  replaced by SELECT DISTINCT * of itself.
+hints:
+  - The total count minus the count of SELECT DISTINCT *.
+  - Or GROUP BY ALL columns and sum count(*) - 1.
+reference_sql: |
+  SELECT (SELECT count(*) FROM inspections)
+    - (SELECT count(*) FROM (SELECT DISTINCT * FROM inspections)) AS duplicate_rows
+grading:
+  ordered: true
+explanation: |
+  31 rows are exact duplicates, small enough to miss and big enough to inflate a count.
+  Note that DISTINCT treats two NULLs as equal, unlike `=`. A uniqueness test on the grain
+  you expect (here, one row per inspection and violation code) is the cheap guard; dbt's
+  `unique` and `dbt_utils.unique_combination_of_columns` tests exist for this.

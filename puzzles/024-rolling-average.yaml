@@ -1,0 +1,40 @@
+id: 24
+slug: rolling-average
+title: Seven-day average with empty days
+difficulty: medium
+datasets: [complaints]
+skills: [window, date-bucketing, null-handling]
+prompt: |
+  For private student loan complaints (`sub_product = 'Private student loan'`), return one
+  row for every day of January 2024 with `day` (DATE), `complaints` that day (0 if none)
+  and `avg_7d`: the average of `complaints` over that day and the six days before it
+  within January (fewer at the start of the month), rounded to 2 decimals.
+hints:
+  - Some days have no complaints, so build the list of days first. generate_series works with dates.
+  - LEFT JOIN the daily counts onto the days and coalesce missing counts to 0.
+  - avg(...) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)
+reference_sql: |
+  WITH days AS (
+    SELECT CAST(d AS DATE) AS day
+    FROM generate_series(DATE '2024-01-01', DATE '2024-01-31', INTERVAL 1 DAY) AS t(d)
+  ),
+  daily AS (
+    SELECT CAST(date_received AS DATE) AS day, count(*) AS complaints
+    FROM complaints
+    WHERE sub_product = 'Private student loan'
+    GROUP BY day
+  )
+  SELECT day,
+    coalesce(daily.complaints, 0) AS complaints,
+    round(avg(coalesce(daily.complaints, 0))
+      OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 2) AS avg_7d
+  FROM days LEFT JOIN daily USING (day)
+  ORDER BY day
+grading:
+  ordered: true
+  tolerance: 0.006
+explanation: |
+  A rolling window over ROWS assumes one row per day. With gaps, "6 preceding rows" can
+  reach back two weeks, and the average is silently wrong. A date spine fixes it: generate
+  every day, left join the facts, fill zeros. 15 and 28 January have no complaints, which
+  is exactly where a gap-blind version drifts.

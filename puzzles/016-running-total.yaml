@@ -1,0 +1,27 @@
+id: 16
+slug: running-total
+title: China's cumulative emissions
+difficulty: medium
+datasets: [emissions]
+skills: [running-total, window]
+prompt: |
+  For China, from 2000 to 2024, return `year`, `co2` and `cumulative_co2`: the running
+  total of `co2` since 2000. Both in million tonnes, rounded to 1 decimal, in year order.
+hints:
+  - sum(co2) OVER (ORDER BY year) is a running total.
+  - Round the output, not the inputs to the sum.
+reference_sql: |
+  SELECT year,
+    round(co2, 1) AS co2,
+    round(sum(co2) OVER (ORDER BY year), 1) AS cumulative_co2
+  FROM emissions
+  WHERE country = 'China' AND year BETWEEN 2000 AND 2024
+  ORDER BY year
+grading:
+  ordered: true
+  tolerance: 0.051
+explanation: |
+  A window aggregate with ORDER BY and no frame defaults to "from the first row to this
+  one", which is exactly a running total. If two rows shared a year, the default RANGE
+  frame would add both at once; ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW makes
+  the frame explicit.

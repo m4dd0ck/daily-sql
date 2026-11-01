@@ -1,0 +1,28 @@
+id: 17
+slug: federal-vs-private
+title: Federal versus private, by month
+difficulty: medium
+datasets: [complaints]
+skills: [pivot, date-bucketing]
+prompt: |
+  For complaints received in 2024, return one row per month with `month` (first day of the
+  month, as a DATE), `federal` (sub_product `'Federal student loan servicing'`) and
+  `private` (sub_product `'Private student loan'`), in month order.
+hints:
+  - count(*) FILTER (WHERE sub_product = ...) builds one column per category.
+  - DuckDB also has a PIVOT statement.
+reference_sql: |
+  SELECT CAST(date_trunc('month', date_received) AS DATE) AS month,
+    count(*) FILTER (WHERE sub_product = 'Federal student loan servicing') AS federal,
+    count(*) FILTER (WHERE sub_product = 'Private student loan') AS private
+  FROM complaints
+  WHERE date_received >= TIMESTAMP '2024-01-01'
+  GROUP BY month
+  ORDER BY month
+grading:
+  ordered: true
+explanation: |
+  Conditional aggregation is the portable pivot: one FILTER (or SUM(CASE ...)) per
+  output column. DuckDB's `PIVOT complaints ON sub_product USING count(*)` writes the
+  columns for you, but its column names come from the data, which a downstream model
+  should not depend on.

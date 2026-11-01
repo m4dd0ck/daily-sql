@@ -1,0 +1,34 @@
+id: 26
+slug: last-known-gdp
+title: Last known GDP
+difficulty: medium
+datasets: [emissions]
+skills: [null-handling, window]
+prompt: |
+  GDP figures lag behind emissions, so the latest years have NULL `gdp`.
+
+  For every country (has an `iso_code`) with a 2024 `population` of at least 100 million,
+  return `country`, `gdp_year` (the latest year with a non-NULL `gdp`) and `gdp_billions`
+  (that year's gdp / 1e9, rounded to 1 decimal).
+hints:
+  - max(year) is the latest year, not the latest year with a GDP. Filter first.
+  - arg_max(gdp, year) returns the gdp of the row with the largest year.
+reference_sql: |
+  WITH big AS (
+    SELECT country FROM emissions
+    WHERE year = 2024 AND iso_code IS NOT NULL AND population >= 100000000
+  )
+  SELECT country,
+    max(year) AS gdp_year,
+    round(arg_max(gdp, year) / 1e9, 1) AS gdp_billions
+  FROM emissions
+  WHERE country IN (SELECT country FROM big) AND gdp IS NOT NULL
+  GROUP BY country
+grading:
+  ordered: false
+  tolerance: 0.051
+explanation: |
+  "Latest value" and "latest non-null value" are different questions, and dashboards that
+  show the latest year often show blanks for every country. Filter the NULLs, then take the
+  latest. Here GDP stops at 2022 for every large country, two years behind the emissions
+  series. In a window, `last_value(gdp IGNORE NULLS)` does the same job per row.

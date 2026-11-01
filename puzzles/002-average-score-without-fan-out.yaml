@@ -1,0 +1,35 @@
+id: 2
+slug: average-score-without-fan-out
+title: Average score without the fan-out
+difficulty: medium
+datasets: [inspections]
+skills: [fan-out, dedup]
+prompt: |
+  Each row of `inspections` is one violation, and the inspection's `score` is repeated on
+  every violation row of that inspection. An inspection is one `camis` on one
+  `inspection_date`.
+
+  What is the average inspection score per borough, counting each inspection once? Return
+  `boro` and `avg_score` rounded to 2 decimals. Skip inspections with no score and the
+  placeholder borough `'0'`.
+hints:
+  - Collapse to one row per (camis, inspection_date) before averaging.
+  - SELECT DISTINCT camis, boro, inspection_date, score is enough here, because the score is the same on every row of an inspection.
+reference_sql: |
+  WITH inspection AS (
+    SELECT DISTINCT camis, boro, inspection_date, score
+    FROM inspections
+    WHERE score IS NOT NULL AND boro <> '0'
+  )
+  SELECT boro, round(avg(score), 2) AS avg_score
+  FROM inspection
+  GROUP BY boro
+grading:
+  ordered: false
+  tolerance: 0.006
+explanation: |
+  Averaging the raw rows weights every inspection by its number of violations, and
+  inspections with many violations also have high scores, so the naive average comes out
+  about 7 points too high in every borough. The fix is to bring the table to the grain the
+  question is asked at (one row per inspection) before aggregating. This is the same
+  mistake as summing order totals after joining to order lines.

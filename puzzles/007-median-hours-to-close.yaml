@@ -1,0 +1,32 @@
+id: 7
+slug: median-hours-to-close
+title: Median hours to close
+difficulty: medium
+datasets: [service_requests]
+skills: [date-bucketing, null-handling]
+prompt: |
+  How long do agencies take to close a request? Use requests that are closed
+  (`closed_date` not NULL) and where `closed_date` is not before `created_date` (a few
+  are, which is a data error).
+
+  For each `agency` with at least 100 such requests, return `agency` and `median_hours`,
+  the median of (closed_date - created_date) in hours, rounded to 1 decimal.
+hints:
+  - epoch(closed_date - created_date) gives the gap in seconds.
+  - median() is an aggregate in DuckDB; HAVING count(*) >= 100 filters the groups.
+reference_sql: |
+  SELECT agency,
+    round(median(epoch(closed_date - created_date)) / 3600, 1) AS median_hours
+  FROM service_requests
+  WHERE closed_date IS NOT NULL AND closed_date >= created_date
+  GROUP BY agency
+  HAVING count(*) >= 100
+grading:
+  ordered: false
+  tolerance: 0.11
+explanation: |
+  The median is the right summary for durations: a handful of requests left open for
+  months would drag an average far from the typical case. Two clean-up rules matter.
+  Open requests have no close time and must not count as zero, and the nine requests
+  "closed before they were opened" are bad data, not fast service. NYPD closes noise and
+  parking calls in about an hour; TLC takes weeks.

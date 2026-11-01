@@ -1,0 +1,29 @@
+id: 28
+slug: closed-within-a-day
+title: Closed within a day, by channel
+difficulty: easy
+datasets: [service_requests]
+skills: [aggregation, null-handling]
+prompt: |
+  People reach 311 by phone, app, web and other channels (`open_data_channel_type`).
+
+  For closed requests (`closed_date` not NULL and not before `created_date`), return per
+  channel `open_data_channel_type`, `closed` (number of such requests) and `pct_within_24h`
+  (share closed at most 24 hours after creation, as a percentage rounded to 1 decimal).
+hints:
+  - closed_date - created_date is an INTERVAL; compare it with INTERVAL 24 HOUR.
+reference_sql: |
+  SELECT open_data_channel_type,
+    count(*) AS closed,
+    round(100.0 * count(*) FILTER (WHERE closed_date - created_date <= INTERVAL 24 HOUR)
+      / count(*), 1) AS pct_within_24h
+  FROM service_requests
+  WHERE closed_date IS NOT NULL AND closed_date >= created_date
+  GROUP BY open_data_channel_type
+grading:
+  ordered: false
+  tolerance: 0.051
+explanation: |
+  App reports close fastest, which may say more about what people report through the app
+  than about the app: the mix of complaint types differs by channel. Comparing rates across groups without looking at
+  the mix inside each group is how Simpson's paradox gets into a slide deck.

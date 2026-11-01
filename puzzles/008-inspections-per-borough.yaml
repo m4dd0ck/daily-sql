@@ -1,0 +1,30 @@
+id: 8
+slug: inspections-per-borough
+title: Inspections, not violations
+difficulty: easy
+datasets: [inspections]
+skills: [dedup, aggregation]
+prompt: |
+  An inspection is one restaurant (`camis`) on one `inspection_date`; the table has one
+  row per violation found.
+
+  How many inspections took place in calendar year 2025 in each borough? Return `boro`
+  and `inspections`. Leave out the placeholder borough `'0'`.
+hints:
+  - Count distinct (camis, inspection_date) pairs, or SELECT DISTINCT first and count after.
+reference_sql: |
+  SELECT boro, count(*) AS inspections
+  FROM (
+    SELECT DISTINCT camis, boro, inspection_date
+    FROM inspections
+    WHERE inspection_date >= DATE '2025-01-01'
+      AND inspection_date < DATE '2026-01-01'
+      AND boro <> '0'
+  )
+  GROUP BY boro
+grading:
+  ordered: false
+explanation: |
+  `count(*)` on the raw table counts violations. Counting at the wrong grain is the most
+  common silent error in reporting, because the number looks plausible. Ask "what is one
+  row?" before writing any COUNT.

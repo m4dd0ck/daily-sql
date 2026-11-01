@@ -1,0 +1,26 @@
+id: 31
+slug: awaiting-first-inspection
+title: Waiting for a first inspection
+difficulty: easy
+datasets: [inspections]
+skills: [null-handling, aggregation]
+prompt: |
+  A restaurant that has never been inspected appears once, with the placeholder
+  `inspection_date` of 1900-01-01.
+
+  Count those restaurants per `boro`, including the placeholder borough `'0'` this time.
+  Return `boro` and `restaurants`.
+hints:
+  - Filter inspection_date = DATE '1900-01-01'.
+reference_sql: |
+  SELECT boro, count(DISTINCT camis) AS restaurants
+  FROM inspections
+  WHERE inspection_date = DATE '1900-01-01'
+  GROUP BY boro
+grading:
+  ordered: false
+explanation: |
+  Sentinel dates such as 1900-01-01 (or 9999-12-31) stand in for "no date" in systems
+  that do not allow NULL. Left in, they wreck every min(), every "days since" and every
+  chart axis. In a staging model, turn them into NULL and keep a boolean such as
+  `is_awaiting_inspection` so the meaning is not lost.
