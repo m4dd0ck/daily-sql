@@ -1,0 +1,10 @@
+node_modules/
+dist/
+public/data/
+data/
+puzzles/
+PRPs/
+*.md
+package-lock.json
+test-results/
+playwright-report/

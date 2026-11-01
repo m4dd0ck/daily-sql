@@ -1,0 +1,46 @@
+{
+  "name": "daily-sql",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One SQL puzzle a day over real, messy public data, graded in the browser with DuckDB-WASM.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "fetch-data": "node scripts/fetch-data.ts",
+    "fingerprints": "node scripts/fingerprints.ts",
+    "try-sql": "node scripts/try-sql.ts"
+  },
+  "dependencies": {
+    "@codemirror/lang-sql": "6.10.0",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
+    "codemirror": "6.0.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
+  }
+}

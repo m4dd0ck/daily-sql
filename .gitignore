@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/raw/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+/*.parquet
+tmp_*.parquet
