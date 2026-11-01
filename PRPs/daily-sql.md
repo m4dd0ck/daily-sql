@@ -290,10 +290,9 @@ npm run typecheck     # tsc --noEmit
 npm test              # vitest run (unit + reference fingerprints)
 npm run build         # tsc --noEmit && vite build
 npx playwright install chromium && npm run test:e2e
-python3 ~/.claude/scripts/doc-check.py --repo .
 ```
 
-The final gate is `/validate` passing.
+The final gate is every command above passing in one run.
 
 ---
 
