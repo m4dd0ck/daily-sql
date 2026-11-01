@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:live": "LIVE_URL=https://m4dd0ck.github.io/daily-sql/ playwright test",
     "fetch-data": "node scripts/fetch-data.ts",
     "fingerprints": "node scripts/fingerprints.ts",
     "try-sql": "node scripts/try-sql.ts",

@@ -66,6 +66,7 @@ the scripts there, not this table.
 | `npm run typecheck` | tsc --noEmit |
 | `npm run test` | vitest run |
 | `npm run test:e2e` | playwright test |
+| `npm run test:live` | LIVE_URL=https://m4dd0ck.github.io/daily-sql/ playwright test |
 | `npm run fetch-data` | node scripts/fetch-data.ts |
 | `npm run fingerprints` | node scripts/fingerprints.ts |
 | `npm run try-sql` | node scripts/try-sql.ts |

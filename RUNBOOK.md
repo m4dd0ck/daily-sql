@@ -59,6 +59,8 @@ puzzles' answers for people who already solved them.
 
 Nothing by hand once Pages is on. Every push to `main` runs the checks and deploys `dist/`.
 `gh run list --limit 3` shows whether it landed.
+Once it has, `npm run test:live` runs the browser tests against the deployed site; the
+network and the Pages CDN change the timing, which is where races show up.
 
 ## Things that bite
 
