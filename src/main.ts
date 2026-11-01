@@ -35,7 +35,10 @@ const todayNumber = todaysPuzzleNumber();
 
 let puzzleNumber = todayNumber;
 let puzzle: Puzzle = puzzleForNumber(puzzleNumber, PUZZLES);
-let isBusy = false;
+// Reason: a load, a run and a grade can overlap when the visitor moves to another puzzle while
+// a query is in flight; the buttons come back only when the last of them has finished.
+let busyTasks = 0;
+let loadToken = 0;
 
 const editor = new SqlEditor(byId('editor'), {
   onRun: () => void run(),
@@ -46,11 +49,26 @@ const submitButton = byIdAs('submit-button', HTMLButtonElement);
 const engineStatus = byId('engine-status');
 const feedback = byId('feedback');
 
-function setBusy(busy: boolean, message?: string): void {
-  isBusy = busy;
-  runButton.disabled = busy;
-  submitButton.disabled = busy;
-  if (message !== undefined) engineStatus.textContent = message;
+function beginTask(message: string): void {
+  busyTasks += 1;
+  runButton.disabled = true;
+  submitButton.disabled = true;
+  engineStatus.textContent = message;
+}
+
+/** End one task; `message` shows once nothing else is running, or at once if `isUrgent`. */
+function endTask(message: string, isUrgent = false): void {
+  busyTasks = Math.max(0, busyTasks - 1);
+  if (busyTasks === 0) {
+    runButton.disabled = false;
+    submitButton.disabled = false;
+  }
+  if (busyTasks === 0 || isUrgent) engineStatus.textContent = message;
+}
+
+/** Whether the visitor is still on the puzzle a task started on. */
+function isShowing(number: number): boolean {
+  return puzzleNumber === number;
 }
 
 function showFeedback(message: string, tone: 'good' | 'warn' | 'bad'): void {
@@ -81,57 +99,74 @@ function showResult(result: ResultSet): void {
   renderResult(byId('result-table'), byId('result-summary'), result);
 }
 
-async function execute(rowLimit: number): Promise<ResultSet> {
-  await engine.ensureTables(puzzle.datasets);
-  const result = await runForGrading(engine, editor.text, rowLimit);
-  showResult(result);
-  return result;
+async function execute(target: Puzzle, sql: string, rowLimit: number): Promise<ResultSet> {
+  await engine.ensureTables(target.datasets);
+  return runForGrading(engine, sql, rowLimit);
 }
 
+// Reason: run and submit capture the puzzle, its number and the SQL when they start. The
+// visitor can move to another puzzle while a query is in flight, and the result must neither
+// be graded against nor shown on the puzzle they moved to.
 async function run(): Promise<void> {
-  if (isBusy) return;
-  setBusy(true, 'Running…');
+  if (busyTasks > 0) return;
+  const number = puzzleNumber;
+  const target = puzzle;
+  const sql = editor.text;
+  beginTask('Running…');
+  let message = 'Ready.';
   try {
-    const result = await execute(DISPLAY_ROWS);
-    feedback.hidden = true;
-    engineStatus.textContent = `Ran. ${result.rowCount} rows. Submit when it answers the question.`;
+    const result = await execute(target, sql, DISPLAY_ROWS);
+    if (isShowing(number)) {
+      showResult(result);
+      feedback.hidden = true;
+      message = `Ran. ${result.rowCount} rows. Submit when it answers the question.`;
+    }
   } catch (error) {
-    showFeedback(errorMessage(error), 'bad');
-    engineStatus.textContent = 'Ready.';
+    if (isShowing(number)) showFeedback(errorMessage(error), 'bad');
   } finally {
-    setBusy(false);
+    endTask(message);
   }
 }
 
 async function submit(): Promise<void> {
-  if (isBusy) return;
-  setBusy(true, 'Grading…');
-  const isToday = puzzleNumber === todayNumber;
+  if (busyTasks > 0) return;
+  const number = puzzleNumber;
+  const target = puzzle;
+  const sql = editor.text;
+  const isToday = number === todayNumber;
+  beginTask('Grading…');
   try {
-    await engine.ensureTables(puzzle.datasets);
-    const expected = await referenceFor(puzzle);
+    await engine.ensureTables(target.datasets);
+    const expected = await referenceFor(target);
     let actual: ResultSet;
     try {
-      actual = await execute(Math.max(DISPLAY_ROWS, expected.rowCount + 1));
+      actual = await execute(target, sql, Math.max(DISPLAY_ROWS, expected.rowCount + 1));
     } catch (error) {
       // Reason: an empty editor or a stray second statement is a typo, not an attempt.
-      if (error instanceof SqlInputError || store.day(puzzleNumber).isSolved) {
-        showFeedback(errorMessage(error), 'bad');
+      if (error instanceof SqlInputError || store.day(number).isSolved) {
+        if (isShowing(number)) showFeedback(errorMessage(error), 'bad');
         return;
       }
-      const record = store.recordAttempt(puzzleNumber, 'error', isToday);
-      showFeedback(`${errorMessage(error)} (Counted as attempt ${record.attempts.length}.)`, 'bad');
+      const record = store.recordAttempt(number, 'error', isToday);
+      if (isShowing(number)) {
+        showFeedback(
+          `${errorMessage(error)} (Counted as attempt ${record.attempts.length}.)`,
+          'bad',
+        );
+      }
       return;
     }
-    const outcome = grade(expected, actual, puzzle.grading);
-    const record = store.recordAttempt(puzzleNumber, attemptKindOf(outcome), isToday);
+    const outcome = grade(expected, actual, target.grading);
+    const record = store.recordAttempt(number, attemptKindOf(outcome), isToday);
+    if (!isShowing(number)) return;
+    showResult(actual);
     const tone = outcome.kind === 'solved' ? 'good' : outcome.kind === 'values' ? 'warn' : 'bad';
-    showFeedback(describeOutcome(outcome, puzzle.grading.isOrdered, record.attempts.length), tone);
+    showFeedback(describeOutcome(outcome, target.grading.isOrdered, record.attempts.length), tone);
     if (outcome.kind === 'solved') showSolved();
   } catch (error) {
-    showFeedback(errorMessage(error), 'bad');
+    if (isShowing(number)) showFeedback(errorMessage(error), 'bad');
   } finally {
-    setBusy(false, 'Ready.');
+    endTask('Ready.');
   }
 }
 
@@ -189,16 +224,28 @@ async function loadPuzzle(number: number): Promise<void> {
   byId('solved-card').hidden = true;
   if (store.day(number).isSolved) showSolved();
 
-  setBusy(true, 'Loading tables…');
+  loadToken += 1;
+  const token = loadToken;
+  const target = puzzle;
+  beginTask('Loading tables…');
+  let message = 'Ready.';
+  let isUrgent = false;
   try {
-    await engine.ensureTables(puzzle.datasets);
+    await engine.ensureTables(target.datasets);
     const columns = await engine.columnsByTable();
-    renderTables(byId('tables-body'), puzzle.datasets, columns);
-    editor.setSchema(columns);
-    void referenceFor(puzzle);
-    setBusy(false, 'Ready.');
+    // Reason: a later navigation owns the page now; this load must not draw over it.
+    if (token === loadToken) {
+      renderTables(byId('tables-body'), target.datasets, columns);
+      editor.setSchema(columns);
+      void referenceFor(target);
+    }
   } catch (error) {
-    setBusy(false, `Could not load the data: ${errorMessage(error)} Reload to try again.`);
+    if (token === loadToken) {
+      message = `Could not load the data: ${errorMessage(error)} Reload to try again.`;
+      isUrgent = true;
+    }
+  } finally {
+    endTask(message, isUrgent);
   }
 }
 
