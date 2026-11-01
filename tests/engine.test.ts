@@ -55,6 +55,15 @@ describe('runForGrading on DuckDB-WASM', () => {
     expect(result.rows.map((row) => row[0])).toContain('co2_per_capita');
   });
 
+  it('keeps two concurrent calls apart', async () => {
+    const [first, second] = await Promise.all([
+      runForGrading(db, 'SELECT 1 AS a', 10),
+      runForGrading(db, "SELECT 'x' AS b, 2 AS c", 10),
+    ]);
+    expect(first.columns).toEqual(['a']);
+    expect(second.rows).toEqual([['x', 2]]);
+  });
+
   it('refuses statements that change data', async () => {
     await expect(runForGrading(db, 'DROP TABLE emissions', 10)).rejects.toThrow();
     const [row] = await db.query('SELECT count(*) AS n FROM emissions');

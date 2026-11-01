@@ -17,7 +17,9 @@ export class SqlInputError extends Error {
   override name = 'SqlInputError';
 }
 
-const RESULT_TABLE = '__daily_sql_result';
+// Reason: the page grades the reference and the visitor's query on one connection, possibly
+// at the same time, so each call stores its result under its own name.
+let resultTableCounter = 0;
 const NUMERIC_TYPE =
   /^(TINYINT|SMALLINT|INTEGER|BIGINT|HUGEINT|UTINYINT|USMALLINT|UINTEGER|UBIGINT|UHUGEINT|FLOAT|REAL|DOUBLE|DECIMAL(\(\d+,\s*\d+\))?)$/i;
 const NON_QUERY_STATEMENT = /^(describe|summarize|show)\b/i;
@@ -163,17 +165,19 @@ export async function runForGrading(
   rowLimit: number,
 ): Promise<ResultSet> {
   const statement = singleStatement(sql);
+  resultTableCounter += 1;
+  const resultTable = `__daily_sql_result_${resultTableCounter}`;
   const body = NON_QUERY_STATEMENT.test(statement) ? `SELECT * FROM (${statement})` : statement;
-  await runner.query(`CREATE OR REPLACE TEMP TABLE ${RESULT_TABLE} AS ${body}\n`);
+  await runner.query(`CREATE OR REPLACE TEMP TABLE ${resultTable} AS ${body}\n`);
   try {
-    const described = await runner.query(`DESCRIBE ${RESULT_TABLE}`);
+    const described = await runner.query(`DESCRIBE ${resultTable}`);
     const columns = described.map((row) => ({
       name: String(row.column_name),
       type: String(row.column_type),
     }));
-    const [countRow] = await runner.query(`SELECT count(*) AS n FROM ${RESULT_TABLE}`);
+    const [countRow] = await runner.query(`SELECT count(*) AS n FROM ${resultTable}`);
     const rowCount = Number(countRow?.n ?? 0);
-    const rows = await runner.query(normalizationSelect(RESULT_TABLE, columns, rowLimit));
+    const rows = await runner.query(normalizationSelect(resultTable, columns, rowLimit));
     return {
       columns: columns.map((column) => column.name),
       types: columns.map((column) => column.type),
@@ -182,6 +186,6 @@ export async function runForGrading(
       isTruncated: rowCount > rows.length,
     };
   } finally {
-    await runner.query(`DROP TABLE IF EXISTS ${RESULT_TABLE}`);
+    await runner.query(`DROP TABLE IF EXISTS ${resultTable}`);
   }
 }
