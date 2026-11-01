@@ -177,7 +177,9 @@ dist/             build output; gitignored
 
 ## History
 
-- 2026-11-01 First version: puzzle bank, five tables, grading, archive, share string, Pages workflow.
+- 2026-11-01 v0.1.0, live on GitHub Pages with puzzle #1: puzzle bank, five tables, grading,
+  archive, share string, Pages workflow. The first run against the live site found a grade
+  landing on the next puzzle when the visitor moved on mid-grade; fixed before the release.
 
 ## Development
 
